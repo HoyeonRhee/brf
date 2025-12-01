@@ -264,7 +264,7 @@ func (brf *BpfRuntimeFuzzer) mutBpfProg(r *randGen, p *BpfProg, opt BrfGenProgOp
 
 func (brf *BpfRuntimeFuzzer) compileBpfProg(p *BpfProg) error {
 	var timeout time.Duration = 10000000000
-	cmd := exec.Command("clang-16", "-g", "-D__TARGET_ARCH_x86", "-mlittle-endian",
+	cmd := exec.Command("clang-18", "-g", "-D__TARGET_ARCH_x86", "-mlittle-endian",
 		"-idirafter", "/usr/local/include",
 		"-idirafter", "/usr/local/llvm/include",
 		"-idirafter", "/usr/include/x86_64-linux-gnu",

@@ -7,7 +7,7 @@ BRF is a coverage-guided fuzzer that aims to fuzz the runtime compononets of eBP
 To use latest bpf features, it is better to build the kernel using the latest llvm.
 
 ``` bash
-git clone --branch llvmorg-17.0.6 https://github.com/llvm/llvm-project.git
+git clone --branch llvmorg-18.0.6 https://github.com/llvm/llvm-project.git
 mkdir llvm-project/build; cd llvm-project/build
 cmake ../llvm -DLLVM_TARGETS_TO_BUILD="BPF;X86" \
 	-DLLVM_ENABLE_PROJECTS=clang \
@@ -34,8 +34,8 @@ Here we use the development branch of network device subsystem of the Linux kern
 ``` bash
 git clone https://git.kernel.org/pub/scm/linux/kernel/git/netdev/net-next.git $KERNEL
 cd $KERNEL
-make CC=clang-17 defconfig
-make CC=clang-17 kvm_guest.config
+make CC=clang-18 defconfig
+make CC=clang-18 kvm_guest.config
 ```
 Follow the [guide](/docs/linux/kernel_configs.md) and enable kernel configs required by Syzkaller
 
@@ -59,23 +59,23 @@ CONFIG_BPF_LIRC_MODE2
 
 Finally, build the Linux kernel with Clang/LLVM.
 ``` make
-make CC=clang-17
+make CC=clang-18
 ```
 
 Build bpftool and libbpf to be used later
 ``` bash
 cd $KERNEL/tools/bpf/bpftool
-make CC=clang-17
+make CC=clang-18
 cd $KERNEL/tools/lib/bpf
 make
 ```
 
-### Create Debian Bookworm Linux image
+### Create Debian trixie Linux image
 ``` bash
 mkdir $IMAGE; cd $IMAGE
 cp $SYZKALLER/tools/create-image.sh .
 chmod +x create-image.sh
-ADD_PACKAGE="make,sysbench,git,vim,tmux,usbutils,tcpdump,clang-16" ./create-image.sh --feature full --distribution bookworm --seek 8191
+ADD_PACKAGE="make,sysbench,git,vim,tmux,usbutils,tcpdump,clang-18" ./create-image.sh --feature full --distribution trixie --seek 8191
 ```
 
 ### Prepare the image for compiling BPF programs
@@ -92,7 +92,7 @@ qemu-system-x86_64 \
         -smp 2 \
         -kernel $KERNEL/arch/x86/boot/bzImage \
         -append "console=ttyS0 root=/dev/sda earlyprintk=serial net.ifnames=0" \
-        -drive file=$IMAGE/bookworm.img,format=raw \
+        -drive file=$IMAGE/trixie.img,format=raw \
         -net user,host=10.0.2.10,hostfwd=tcp:127.0.0.1:10021-:22 \
         -net nic,model=e1000 \
 	-virtfs local,path=$KERNEL,mount_tag=host0,security_model=mapped,id=host0 \
@@ -113,10 +113,10 @@ Create a config like the following and replace $SYZKALLER, $KERNEL, $IMAGE and $
 {
         "target": "linux/amd64",
         "http": "127.0.0.1:56741",
-        "workdir": "$SYZKALLER/workdir/bookworm",
+        "workdir": "$SYZKALLER/workdir/trixie",
         "kernel_obj": "$KERNEL",
-        "image": "$IMAGE/bookworm.img",
-        "sshkey": "$IMAGE/bookworm.id_rsa",
+        "image": "$IMAGE/trixie.img",
+        "sshkey": "$IMAGE/trixie.id_rsa",
         "syzkaller": "$SYZKALLER",
         "procs": 8,
         "type": "qemu",
@@ -131,7 +131,7 @@ Create a config like the following and replace $SYZKALLER, $KERNEL, $IMAGE and $
 ```
 Run Syzkaller manager:
 ```
-mkdir -p workdir/bookworm
+mkdir -p workdir/trixie
 ./bin/syzkaller -config my.cfg
 ```
 ## Acknoledgement
