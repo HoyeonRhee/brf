@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"bytes"
 	"time"
 
 	"github.com/google/syzkaller/pkg/osutil"
@@ -12,6 +13,7 @@ import (
 type BpfRuntimeFuzzer struct {
 	isEnabled     bool
 	workDir       string
+	lastProgPath  string
 
 	helperFuncMap map[string]*BpfHelper
 	progTypeMap   map[BpfProgTypeEnum]*BpfProgType
@@ -209,6 +211,7 @@ func (brf *BpfRuntimeFuzzer) genSeedBpfProg(r *randGen) *BpfProg {
 			fmt.Printf("failed to compile bpf program: %v\n", err)
 			continue
 		}
+		brf.lastProgPath = p.BasePath
 		return p
 	}
 	return nil
@@ -247,6 +250,7 @@ func (brf *BpfRuntimeFuzzer) mutSeedBpfProg(r *randGen, path string) *BpfProg {
 			fmt.Printf("failed to compile bpf program: %v\n", err)
 			continue
 		}
+		brf.lastProgPath = p.BasePath
 		return p
 	}
 	return nil
@@ -276,6 +280,24 @@ func (brf *BpfRuntimeFuzzer) compileBpfProg(p *BpfProg) error {
 		"-o", p.BasePath + ".o")
 	cmd.Dir = brf.workDir
 
+	var buf bytes.Buffer
+	cmd.Stdout = &buf
+	cmd.Stderr = &buf
+
 	_, err := osutil.Run(timeout, cmd)
-	return err
+	if err != nil {
+		_ = os.WriteFile(p.BasePath+".err", buf.Bytes(), 0644)
+		return err
+	}
+	// On success, clean up any previous error log.
+	_ = os.Remove(p.BasePath + ".err")
+	return nil
+}
+
+// CleanupLastProg truncates the last generated .o to save disk space.
+func (brf *BpfRuntimeFuzzer) CleanupLastProg() {
+	if !brf.isEnabled || brf.lastProgPath == "" {
+		return
+	}
+	_ = os.Truncate(brf.lastProgPath+".o", 0)
 }

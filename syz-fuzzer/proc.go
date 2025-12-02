@@ -85,10 +85,13 @@ func (proc *Proc) loop() {
 		ct := proc.fuzzer.choiceTable
 //		fuzzerSnapshot := proc.fuzzer.snapshot()
 //		if len(fuzzerSnapshot.corpus) == 0 || i%generatePeriod == 0 {
-			// Generate a new prog.
-			p := proc.fuzzer.target.Generate(proc.rnd, prog.RecommendedCalls, ct)
-			log.Logf(1, "#%v: generated", proc.pid)
-			proc.executeAndCollide(proc.execOpts, p, ProgNormal, StatGenerate)
+		// Generate a new prog.
+		p := proc.fuzzer.target.Generate(proc.rnd, prog.RecommendedCalls, ct)
+		log.Logf(1, "#%v: generated", proc.pid)
+		proc.executeAndCollide(proc.execOpts, p, ProgNormal, StatGenerate)
+		if proc.fuzzer.target.Brf != nil {
+			proc.fuzzer.target.Brf.CleanupLastProg()
+		}
 //		} else {
 //			// Mutate an existing prog.
 //			p := fuzzerSnapshot.chooseProgram(proc.rnd).Clone()
