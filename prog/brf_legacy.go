@@ -1769,7 +1769,10 @@ func (sd *StructDef) fieldIdx(f string) int {
 			return i
 		}
 	}
-	fmt.Printf("cannot find field %v (%v) in %v\n", f, fieldName, sd.Name)
+	// Reduce noise: skip placeholder "default" fields that don't exist on newer kernels.
+	if fieldName != "default" {
+		fmt.Printf("cannot find field %v (%v) in %v\n", f, fieldName, sd.Name)
+	}
 	return -1
 }
 
@@ -2682,4 +2685,3 @@ func (p *BpfProg) genCSource() string {
 
 	return s.String()
 }
-
